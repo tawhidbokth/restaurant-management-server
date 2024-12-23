@@ -1,6 +1,6 @@
 const express = require('express');
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 5000;
@@ -41,9 +41,24 @@ async function run() {
         res.status(500).send({ error: 'Failed to fetch data' });
       }
     });
+
+    app.get('/foods/:id', async (req, res) => {
+      try {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await foodsCollection.findOne(query);
+        if (!result) {
+          res.status(404).send({ error: 'Equipment not found' });
+        } else {
+          res.send(result);
+        }
+      } catch (error) {
+        res.status(500).send({ error: 'Failed to fetch equipment' });
+      }
+    });
   } finally {
     // Ensures that the client will close when you finish/error
-    await client.close();
+    // await client.close();
   }
 }
 run().catch(console.dir);
