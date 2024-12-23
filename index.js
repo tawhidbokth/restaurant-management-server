@@ -28,6 +28,19 @@ async function run() {
     console.log(
       'Pinged your deployment. You successfully connected to MongoDB!'
     );
+
+    const database = client.db('restaurantDB');
+    const foodsCollection = database.collection('foods');
+
+    app.get('/foods', async (req, res) => {
+      try {
+        const limit = parseInt(req.query.limit) || 0; // Default: no limit
+        const foods = await foodsCollection.find().limit(limit).toArray();
+        res.send(foods);
+      } catch (error) {
+        res.status(500).send({ error: 'Failed to fetch data' });
+      }
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     await client.close();
