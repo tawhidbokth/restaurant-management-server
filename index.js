@@ -56,6 +56,16 @@ async function run() {
         res.status(500).send({ error: 'Failed to fetch equipment' });
       }
     });
+
+    app.post('/foods', async (req, res) => {
+      try {
+        const addItemList = req.body;
+        const result = await foodsCollection.insertOne(addItemList);
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({ error: 'Failed to add equipment' });
+      }
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
