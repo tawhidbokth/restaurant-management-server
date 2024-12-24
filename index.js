@@ -33,13 +33,14 @@ async function run() {
     const foodsCollection = database.collection('foods');
 
     app.get('/foods', async (req, res) => {
-      try {
-        const limit = parseInt(req.query.limit) || 0; // Default: no limit
-        const foods = await foodsCollection.find().limit(limit).toArray();
-        res.send(foods);
-      } catch (error) {
-        res.status(500).send({ error: 'Failed to fetch data' });
+      const email = req.query.email;
+      let query = {};
+      if (email) {
+        query = { hr_email: email };
       }
+      const limit = parseInt(req.query.limit) || 0; // Default: no limit
+      const foods = await foodsCollection.find(query).limit(limit).toArray();
+      res.send(foods);
     });
 
     app.get('/foods/:id', async (req, res) => {
