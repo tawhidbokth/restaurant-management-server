@@ -91,18 +91,22 @@ async function run() {
     });
 
     app.get('/foods-purchase', async (req, res) => {
-      try {
-        const limit = parseInt(req.query.limit) || 0; // Default: no limit
-        const equipment = await foodpurchaseCollection
-          .find()
-          .limit(limit)
-          .toArray();
-        res.send(equipment);
-      } catch (error) {
-        res.status(500).send({ error: 'Failed to fetch data' });
+      const email = req.query.email;
+      const query = { userEmail: email };
+      const result = await foodpurchaseCollection.find(query).toArray();
+      for (const purchase of result) {
+        // console.log(application.job_id)
+        const query1 = { _id: new ObjectId(purchase.food_id) };
+        const food = await foodsCollection.findOne(query1);
+        if (food) {
+          purchase.foodName = food.foodName;
+          purchase.price = food.price;
+          purchase.userName = food.userName;
+          purchase.foodImage = food.foodImage;
+        }
       }
+      res.send(result);
     });
-
     app.post('/foods-purchase', async (req, res) => {
       const purchase = req.body;
       console.log('Received data:', purchase);
