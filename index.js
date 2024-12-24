@@ -29,8 +29,10 @@ async function run() {
       'Pinged your deployment. You successfully connected to MongoDB!'
     );
 
-    const database = client.db('restaurantDB');
-    const foodsCollection = database.collection('foods');
+    const foodsCollection = client.db('restaurantDB').collection('foods');
+    const foodpurchaseCollection = client
+      .db('restaurantDB')
+      .collection('foods_purchase');
 
     app.get('/foods', async (req, res) => {
       const email = req.query.email;
@@ -66,6 +68,46 @@ async function run() {
       } catch (error) {
         res.status(500).send({ error: 'Failed to add equipment' });
       }
+    });
+
+    app.put('/foods/:id', async (req, res) => {
+      try {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const options = { upsert: true };
+        const updatedDoc = {
+          $set: req.body,
+        };
+
+        const result = await foodsCollection.updateOne(
+          filter,
+          updatedDoc,
+          options
+        );
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({ error: 'Failed to update equipment' });
+      }
+    });
+
+    app.get('/foods-purchase', async (req, res) => {
+      try {
+        const limit = parseInt(req.query.limit) || 0; // Default: no limit
+        const equipment = await foodpurchaseCollection
+          .find()
+          .limit(limit)
+          .toArray();
+        res.send(equipment);
+      } catch (error) {
+        res.status(500).send({ error: 'Failed to fetch data' });
+      }
+    });
+
+    app.post('/foods-purchase', async (req, res) => {
+      const purchase = req.body;
+      console.log('Received data:', purchase);
+      const result = await foodpurchaseCollection.insertOne(purchase);
+      res.send(result);
     });
   } finally {
     // Ensures that the client will close when you finish/error
