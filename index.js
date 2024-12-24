@@ -113,6 +113,21 @@ async function run() {
       const result = await foodpurchaseCollection.insertOne(purchase);
       res.send(result);
     });
+
+    app.delete('/foods-purchase/:id', async (req, res) => {
+      try {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await foodpurchaseCollection.deleteOne(query);
+        if (result.deletedCount === 0) {
+          res.status(404).send({ error: 'food not found' });
+        } else {
+          res.send(result);
+        }
+      } catch (error) {
+        res.status(500).send({ error: 'Failed to delete equipment' });
+      }
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
