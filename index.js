@@ -94,6 +94,7 @@ async function run() {
       const email = req.query.email;
       const query = { userEmail: email };
       const result = await foodpurchaseCollection.find(query).toArray();
+      console.log(result);
       for (const purchase of result) {
         // console.log(application.job_id)
         const query1 = { _id: new ObjectId(purchase.food_id) };
@@ -101,7 +102,7 @@ async function run() {
         if (food) {
           purchase.foodName = food.foodName;
           purchase.price = food.price;
-          purchase.userName = food.userName;
+          purchase.hr_name = food.hr_name;
           purchase.foodImage = food.foodImage;
         }
       }
