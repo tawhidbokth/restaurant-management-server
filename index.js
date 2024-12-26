@@ -4,13 +4,10 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 5000;
-
 app.use(cors());
 app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.yzegd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
-
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -22,18 +19,17 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
-    // Send a ping to confirm a successful connection
-    await client.db('admin').command({ ping: 1 });
-    console.log(
-      'Pinged your deployment. You successfully connected to MongoDB!'
-    );
+    // await client.connect();
+    // // Send a ping to confirm a successful connection
+    // await client.db('admin').command({ ping: 1 });
+    // console.log(
+    //   'Pinged your deployment. You successfully connected to MongoDB!'
+    // );
 
     const foodsCollection = client.db('restaurantDB').collection('foods');
     const foodpurchaseCollection = client
       .db('restaurantDB')
       .collection('foods_purchase');
-
     app.get('/foods', async (req, res) => {
       const email = req.query.email;
       let query = {};
@@ -96,7 +92,6 @@ async function run() {
       const result = await foodpurchaseCollection.find(query).toArray();
       console.log(result);
       for (const purchase of result) {
-        // console.log(application.job_id)
         const query1 = { _id: new ObjectId(purchase.food_id) };
         const food = await foodsCollection.findOne(query1);
         if (food) {
@@ -109,12 +104,38 @@ async function run() {
       res.send(result);
     });
     app.post('/foods-purchase', async (req, res) => {
-      const purchase = req.body;
-      console.log('Received data:', purchase);
-      const result = await foodpurchaseCollection.insertOne(purchase);
-      res.send(result);
-    });
+      try {
+        const purchase = req.body;
+        console.log('Received data:', purchase);
+        const result = await foodpurchaseCollection.insertOne(purchase);
+        const id = purchase.food_id;
+        const query = { _id: new ObjectId(id) };
+        const food = await foodsCollection.findOne(query);
+        let newCount = 0;
+        if (food.purchaseCount) {
+          newCount = food.purchaseCount + 1;
+        } else {
+          newCount = 1;
+        }
 
+        // now update the job info
+        const filter = { _id: new ObjectId(id) };
+        const updatedDoc = {
+          $set: {
+            purchaseCount: newCount,
+          },
+        };
+
+        const updateResult = await foodsCollection.updateOne(
+          filter,
+          updatedDoc
+        );
+        res.send(result);
+      } catch (error) {
+        console.error('Error processing purchase:', error);
+        res.status(500).send({ error: 'Failed to process purchase' });
+      }
+    });
     app.delete('/foods-purchase/:id', async (req, res) => {
       try {
         const id = req.params.id;
