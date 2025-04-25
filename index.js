@@ -30,6 +30,63 @@ async function run() {
     const foodpurchaseCollection = client
       .db('restaurantDB')
       .collection('foods_purchase');
+    const userCollection = client.db('restaurantDB').collection('users');
+
+    app.post('/users', async (req, res) => {
+      const user = req.body;
+
+      try {
+        // Check if the email already exists
+        const query = { email: user.email };
+        const existingUser = await userCollection.findOne(query);
+
+        if (existingUser) {
+          return res.status(200).send({
+            message: 'User already exists',
+            insertedId: null,
+          });
+        }
+
+        // Insert the new user
+        const result = await userCollection.insertOne(user);
+        return res.status(201).send({
+          message: 'User successfully created',
+          insertedId: result.insertedId,
+        });
+      } catch (error) {
+        // Handle server errors
+        console.error('Error inserting user:', error);
+        res.status(500).send({
+          message: 'Internal server error',
+        });
+      }
+    });
+    app.get('/users', async (req, res) => {
+      const email = req.query.email;
+      let query = {};
+      if (email) {
+        query = { email: email };
+      }
+      const limit = parseInt(req.query.limit) || 0; // Default: no limit
+      const users = await userCollection.find(query).limit(limit).toArray();
+      res.send(users);
+    });
+
+    app.get('/users/:id', async (req, res) => {
+      try {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await userCollection.findOne(query);
+        if (!result) {
+          res.status(404).send({ error: 'User not found' });
+        } else {
+          res.send(result);
+        }
+      } catch (error) {
+        res.status(500).send({ error: 'Failed to fetch user' });
+      }
+    });
+
     app.get('/foods', async (req, res) => {
       const email = req.query.email;
       let query = {};
